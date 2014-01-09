@@ -1,3 +1,3 @@
-= Signinable
+= Signinable {<img src="https://travis-ci.org/novozhenets/signinable.png?branch=master" alt="Build Status" />}[https://travis-ci.org/novozhenets/signinable]
 
 This project rocks and uses MIT-LICENSE.
