@@ -22,7 +22,7 @@ Gem does not work with <b>Rails < 4</b>.
 
 == Usage
 
-Call signinable in an ActiveRecord class and/or pass options to make your model token signinable. 
+Call signinable in an ActiveRecord class to make your model token signinable. 
 
   class User < ActiveRecord::Base
     signinable
