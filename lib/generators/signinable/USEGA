@@ -1,0 +1,6 @@
+Description:
+  Copies signin.rb to app/models/.
+  Copies create_signins.rb to db/migrate
+
+Examples:
+  `rails generate signinable`
