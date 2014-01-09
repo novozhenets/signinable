@@ -24,7 +24,7 @@ describe User do
 
     it "should set expiration_time" do
       signin = sign_in_user(@user, @credentials)
-      signin.expiration_time.should eq(Time.zone.now + User.signin_expiration)
+      signin.expiration_time.to_i.should eq((Time.zone.now + User.signin_expiration).to_i)
     end
 
     it "should not set expiration_time" do
