@@ -104,6 +104,6 @@ If false then all user signin tokens become expired except the last one, once th
   signinable restrictions: [:ip, :user_agent]
 
 +restriction+ can be passed as an array of parameters, which have to be checked every time user tries to +authenticate_with_token+.
-This is done to prevent unauthorized access to tokens or to forbid using one token from different IPs or browsers. Posibble values are: +ip+ and +user_agent+ <b>Default</b> is empty array.
+This is done to prevent unauthorized access to tokens or to forbid using one token from different IPs or browsers. Possible values are: +ip+ and +user_agent+ <b>Default</b> is empty array.
 
 All options can be combined any way.
