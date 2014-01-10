@@ -30,7 +30,7 @@ Call signinable in an ActiveRecord class to make your model token signinable.
 
 === 1. Instance methods
 
-  User.signin(ip, user_agent, referer)
+  user.signin(ip, user_agent, referer)
 
 This will create and return signin token, which you can store in user cookies or session. For example, in your +session_controller+
 
@@ -52,7 +52,7 @@ To signout user in your +session_controller+
   def destroy
     # your code here
 
-    user.signout(cookies[:signin_token], request.remote_ip, request.user_agent, request.referer)
+    user.signout(cookies[:signin_token], request.remote_ip, request.user_agent)
 
     # more code here
   end
@@ -75,7 +75,7 @@ Token is passed to +authenticate_with_token+ method on model class. For example,
 
     protected
     def current_user
-      @current_user ||= User.authenticate_with_token(cookies[:signin_token], request.remote_ip, request.user_agent, request.referer) if cookies[:signin_token]
+      @current_user ||= User.authenticate_with_token(cookies[:signin_token], request.remote_ip, request.user_agent) if cookies[:signin_token]
     end
 
     # you should change this to whatever logic you need
