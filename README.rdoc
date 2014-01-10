@@ -10,11 +10,7 @@ Add this to your Gemfile and run the +bundle+ command to install it.
 
   gem "signinable"
 
-After that run
-
-  rails generate signinable
-
-and migrate the database.
+And migrate the database.
 
 Gem does not work with <b>Rails < 3</b>.
 

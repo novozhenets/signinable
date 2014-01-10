@@ -1,5 +1,35 @@
-ActiveRecord::Schema.define do
-  create_table :users do |t|
-    t.string :name
+# encoding: UTF-8
+# This file is auto-generated from the current state of the database. Instead
+# of editing this file, please use the migrations feature of Active Record to
+# incrementally modify your database, and then regenerate this schema definition.
+#
+# Note that this schema.rb definition is the authoritative source for your
+# database schema. If you need to create the application database on another
+# system, you should be using db:schema:load, not running all the migrations
+# from scratch. The latter is a flawed and unsustainable approach (the more migrations
+# you'll amass, the slower it'll run and the greater likelihood for issues).
+#
+# It's strongly recommended that you check this file into your version control system.
+
+ActiveRecord::Schema.define(version: 20140103165607) do
+
+  create_table "signins", force: true do |t|
+    t.integer  "signinable_id",                null: false
+    t.string   "signinable_type",              null: false
+    t.string   "token",                        null: false
+    t.string   "referer",         default: ""
+    t.string   "user_agent",      default: ""
+    t.string   "ip",                           null: false
+    t.datetime "expiration_time"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
+
+  add_index "signins", ["signinable_id", "signinable_type"], name: "index_signins_on_signinable_id_and_signinable_type"
+  add_index "signins", ["token"], name: "index_signins_on_token"
+
+  create_table "users", force: true do |t|
+    t.string "name"
+  end
+
 end

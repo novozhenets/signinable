@@ -14,3 +14,7 @@
 ## v1.1.2
 
 * minimum ruby version is now 1.9.3
+
+## v2.0.0
+
+* moved to engine
