@@ -7,8 +7,8 @@ describe User do
     User.signin_simultaneous = true
     User.signin_restrictions = []
     @user = FactoryGirl.create(:user)
-    @credentials = ['127.0.0.1', 'user_agent', 'referer']
-    @other_credentials = ['127.0.0.2', 'user_agent2', 'referer2']
+    @credentials = ['127.0.0.1', 'user_agent']
+    @other_credentials = ['127.0.0.2', 'user_agent2']
   end
 
   after :each do
@@ -43,7 +43,7 @@ describe User do
     end
 
     context "should be allowed with" do
-      %w{ip user_agent referer}.each do |c|
+      %w{ip user_agent}.each do |c|
         it "changed #{c} if not restricted" do
           signin = sign_in_user(@user, @credentials)
           sign_out_user(signin, @credentials).should be_true
@@ -52,7 +52,7 @@ describe User do
     end
 
     context "should not be allowed with" do
-      %w{ip user_agent referer}.each do |c|
+      %w{ip user_agent}.each do |c|
         it "changed #{c} if restricted" do
           User.signin_restrictions = [c]
           signin = sign_in_user(@user, @credentials)
@@ -98,7 +98,7 @@ describe User do
         User.authenticate_with_token(signin.token, *@credentials).should eq(@user)
       end
 
-      %w{ip user_agent referer}.each do |c|
+      %w{ip user_agent}.each do |c|
         it "changed #{c} if not restricted" do
           signin = sign_in_user(@user, @credentials)
           User.authenticate_with_token(signin.token, *@other_credentials).should eq(@user)
@@ -121,7 +121,7 @@ describe User do
         User.authenticate_with_token(signin.token, *@credentials).should be_nil
       end
 
-      %w{ip user_agent referer}.each do |c|
+      %w{ip user_agent}.each do |c|
         it "changed #{c} if restricted" do
           User.signin_restrictions = [c]
           signin = sign_in_user(@user, @credentials)
