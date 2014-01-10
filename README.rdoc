@@ -16,7 +16,7 @@ After that run
 
 and migrate the database.
 
-Gem does not work with <b>Rails < 4</b>.
+Gem does not work with <b>Rails < 3</b>.
 
 <b>Requires Ruby 1.9.2 or later.</b>
 
