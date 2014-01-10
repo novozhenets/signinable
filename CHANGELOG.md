@@ -18,3 +18,7 @@
 ## v2.0.0
 
 * moved to engine
+
+## v2.0.1
+
+* changed signin IP field to native type for postgres DB

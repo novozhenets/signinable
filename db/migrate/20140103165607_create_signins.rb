@@ -11,6 +11,10 @@ class CreateSignins < ActiveRecord::Migration
       t.timestamps
     end
 
+    if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+      execute "ALTER TABLE signins ALTER COLUMN ip TYPE inet USING ip::inet"
+    end
+
     add_index :signins, [:signinable_id, :signinable_type]
     add_index :signins, :token
   end
