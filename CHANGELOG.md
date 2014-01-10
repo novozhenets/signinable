@@ -10,3 +10,7 @@
 
 * removed unnecessary dependencies
 * support of rails 3+ added
+
+## v1.1.2
+
+* minimum ruby version is now 1.9.3

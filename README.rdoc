@@ -18,7 +18,7 @@ and migrate the database.
 
 Gem does not work with <b>Rails < 3</b>.
 
-<b>Requires Ruby 1.9.2 or later.</b>
+<b>Requires Ruby 1.9.3 or later.</b>
 
 == Usage
 
