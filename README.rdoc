@@ -1,3 +1,109 @@
 = Signinable
+{<img src="https://badge.fury.io/rb/signinable.png" alt="Gem Version" />}[http://badge.fury.io/rb/signinable]
+{<img src="https://travis-ci.org/novozhenets/signinable.png?branch=master" alt="Build Status" />}[https://travis-ci.org/novozhenets/signinable]
 
-This project rocks and uses MIT-LICENSE.
+Signinable is an authentication library for Ruby on Rails which allows token authentication for any user model.
+
+== Installation
+
+Add this to your Gemfile and run the +bundle+ command to install it.
+
+  gem "signinable"
+  
+After that run 
+
+  rails generate signinable
+
+and migrate the database. 
+
+Gem does not work with <b>Rails < 4</b>. 
+
+<b>Requires Ruby 1.9.2 or later.</b>
+
+== Usage
+
+Call signinable in an ActiveRecord class to make your model token signinable. 
+
+  class User < ActiveRecord::Base
+    signinable
+  end
+  
+=== 1. Instance methods
+
+  User.signin(ip, user_agent, referer)
+  
+This will create and return signin token, which you can store in user cookies or session. For example, in your +session_controller+
+
+  class SessionsController < ApplicationController
+  
+    def create
+      # check user credentials
+      
+      # create signin token and set it into cookies
+      cookies[:signin_token] = user.signin(request.remote_ip, request.user_agent, request.referer)
+      
+      # more code here
+    end
+  
+  end
+
+To signout user in your +session_controller+
+  
+  def destroy
+    # your code here
+    
+    user.signout(cookies[:signin_token], request.remote_ip, request.user_agent, request.referer)
+    
+    # more code here
+  end
+  
+This will expire passed token.
+  
+  user.last_signin
+  
+This will return instance of +Signin+ model unless +User+ hasn't signed in yet.
+
+=== 2. Class methods
+
+Token is passed to +authenticate_with_token+ method on model class. For example, in your +application_controller+
+
+  class ApplicationController < ActionController::Base
+    # your code here
+    
+    before_action :require_login
+    helper_method :current_user
+
+    protected
+    def current_user
+      @current_user ||= User.authenticate_with_token(cookies[:signin_token], request.remote_ip, request.user_agent, request.referer) if cookies[:signin_token]
+    end
+    
+    # you should change this to whatever logic you need
+    def require_login
+      unless current_user
+        session[:return_to] ||= request.referer
+        redirect_to login_url
+      end
+    end
+    
+    # more code here
+  end
+  
+=== 3. Options
+
+Optional parameters can be passed in +signinable+ method.
+
+  signinable expiration: 1.day
+  
+Expiration time of token is increased by +expiration+ value every time +authenticate_with_token+ gets called. <b>Default</b> is +2.hours+.
+
+  signinable simultaneous: false
+  
+If false then all user signin tokens become expired except the last one, once the user is signed in. <b>Default</b> is +true+.
+
+  signinable restrictions: [:ip, :user_agent]
+  
++restriction+ can be passed as array of parameters, which have to be checked every time user tries to +authenticate_with_token+ or +signout+. 
+This is done to prevent unauthorized access to tokens or to forbid using one token from different IPs or browsers. Posibble values are: +ip+, +user_agent+ and +referer+ <b>Default</b> is empty array.
+
+All options can be combined any way.
