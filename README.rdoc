@@ -30,7 +30,7 @@ Call signinable in an ActiveRecord class to make your model token signinable.
 
 === 1. Instance methods
 
-  User.signin(ip, user_agent, referer)
+  user.signin(ip, user_agent, referer)
 
 This will create and return signin token, which you can store in user cookies or session. For example, in your +session_controller+
 
