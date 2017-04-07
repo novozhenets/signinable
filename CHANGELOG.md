@@ -22,3 +22,7 @@
 ## v2.0.1
 
 * changed signin IP field to native type for postgres DB
+
+## v2.0.2
+
+* Support for the expiration parameter as a lambda function

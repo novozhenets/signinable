@@ -16,6 +16,10 @@ module Signinable
 
       def authenticate_with_token(token, ip, user_agent)
         if(signin = Signin.find_by_token(token))
+          if self.signin_expiration.respond_to?(:call)
+            self.signin_expiration = self.signin_expiration.call(signin.signinable)
+          end
+
           if self.signin_expiration > 0
             return nil if signin.expired?
           end
