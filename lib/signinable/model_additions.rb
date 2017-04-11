@@ -51,6 +51,9 @@ module Signinable
     end
 
     def signin(ip, user_agent, referer)
+      if self.class.signin_expiration.respond_to?(:call)
+        self.class.signin_expiration = self.class.signin_expiration.call(self)
+      end
       expiration_time = self.class.signin_expiration == 0 ? nil : (Time.zone.now + self.class.signin_expiration)
       Signin.create!(signinable: self, ip: ip, referer: referer, user_agent: user_agent, expiration_time: expiration_time).token
     end
