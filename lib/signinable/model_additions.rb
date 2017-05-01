@@ -7,9 +7,9 @@ module Signinable
         cattr_accessor :signin_expiration
         cattr_accessor :signin_simultaneous
         cattr_accessor :signin_restrictions
-        self.signin_expiration = options[:expiration] || 2.hours
-        self.signin_simultaneous = options[:simultaneous] || true
-        self.signin_restrictions = (options[:restrictions] && options[:restrictions].is_a?(Array)) ? options[:restrictions] : []
+        self.signin_expiration = options.fetch(:expiration, 2.hours)
+        self.signin_simultaneous = options.fetch(:simultaneous, true)
+        self.signin_restrictions = options.fetch(:restrictions, []).is_a?(Array) ? options[:restrictions] : []
 
         has_many :signins, as: :signinable, dependent: :destroy
       end
@@ -29,7 +29,7 @@ module Signinable
           end
 
           return nil unless self.check_signin_permission(signin, ip, user_agent)
-          signin.update!(expiration_time: (Time.zone.now + self.signin_expiration)) unless self.signin_expiration == 0
+          signin.update!(expiration_time: (Time.zone.now + self.signin_expiration)) unless signin.expiration_time.nil? || self.signin_expiration == 0
           signin.signinable
         end
       end
@@ -50,11 +50,11 @@ module Signinable
       end
     end
 
-    def signin(ip, user_agent, referer)
+    def signin(ip, user_agent, referer, permanent = false)
       if self.class.signin_expiration.respond_to?(:call)
         self.class.signin_expiration = self.class.signin_expiration.call(self)
       end
-      expiration_time = self.class.signin_expiration == 0 ? nil : (Time.zone.now + self.class.signin_expiration)
+      expiration_time = (self.class.signin_expiration == 0 || permanent) ? nil : (Time.zone.now + self.class.signin_expiration)
       Signin.create!(signinable: self, ip: ip, referer: referer, user_agent: user_agent, expiration_time: expiration_time).token
     end
 

@@ -26,3 +26,11 @@
 ## v2.0.2
 
 * Support for the expiration parameter as a lambda function
+
+## v2.0.3
+
+* Expiration parameter as a lambda function fix
+
+## v2.0.4
+
+* Signins can be created permanent now
