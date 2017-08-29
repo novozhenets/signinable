@@ -40,7 +40,7 @@ module Signinable
 
       private
       def signin_permitted?(signin, ip, user_agent)
-        restriction_fields = case self.signin_restrictions
+        restriction_fields = case
         when self.signin_restrictions.respond_to?(:call)
           self.signin_restrictions.call(signin.signinable)
         when self.signin_restrictions.is_a?(Array)
