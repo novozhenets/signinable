@@ -37,5 +37,9 @@
 
 ## v2.0.5
 
+* bugged. removed
+
+## v2.0.6
+
 * Added IPv6 support
 * Signin restrictions as lambda
