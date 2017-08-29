@@ -34,3 +34,8 @@
 ## v2.0.4
 
 * Signins can be created permanent now
+
+## v2.0.5
+
+* Added IPv6 support
+* Signin restrictions as lambda

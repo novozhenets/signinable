@@ -9,7 +9,7 @@ module Signinable
         cattr_accessor :signin_restrictions
         self.signin_expiration = options.fetch(:expiration, 2.hours)
         self.signin_simultaneous = options.fetch(:simultaneous, true)
-        self.signin_restrictions = options.fetch(:restrictions, []).is_a?(Array) ? options[:restrictions] : []
+        self.signin_restrictions = options[:restrictions]
 
         has_many :signins, as: :signinable, dependent: :destroy
       end
@@ -40,7 +40,16 @@ module Signinable
 
       private
       def signin_permitted?(signin, ip, user_agent)
-        self.signin_restrictions.each do |field|
+        restriction_fields = case self.signin_restrictions
+        when self.signin_restrictions.respond_to?(:call)
+          self.signin_restrictions.call(signin.signinable)
+        when self.signin_restrictions.is_a?(Array)
+          self.signin_restrictions
+        else
+          []
+        end
+
+        restriction_fields.each do |field|
           if(local_variables.include?(field.to_sym) && signin.respond_to?("#{field}"))
             return false unless signin.send("#{field}") == eval("#{field}")
           end
