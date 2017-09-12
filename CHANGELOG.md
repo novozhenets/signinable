@@ -43,3 +43,7 @@
 
 * Added IPv6 support
 * Signin restrictions as lambda
+
+## v2.0.7
+
+* Compability with Rails 5 migrations

@@ -1,4 +1,5 @@
-class CreateSignins < ActiveRecord::Migration
+migration_kls = Rails::VERSION::MAJOR > 4 ? ActiveRecord::Migration[5.0] : ActiveRecord::Migration
+class CreateSignins < migration_kls
   def self.up
     create_table :signins do |t|
       t.integer   :signinable_id, null: false
