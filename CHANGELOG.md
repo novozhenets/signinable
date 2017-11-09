@@ -47,3 +47,7 @@
 ## v2.0.7
 
 * Compability with Rails 5 migrations
+
+## v2.0.8
+
+* Add ability to skip restriction on token authentication
