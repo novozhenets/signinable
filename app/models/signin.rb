@@ -19,4 +19,9 @@ class Signin < ActiveRecord::Base
   def expired?
     expiration_time && expiration_time <= Time.zone.now
   end
+
+  if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "mysql"
+    serialize :custom_data    
+  end
+  
 end

@@ -59,12 +59,12 @@ module Signinable
       end
     end
 
-    def signin(ip, user_agent, referer, permanent = false)
+    def signin(ip, user_agent, referer, permanent = false, custom_data = {})
       if self.class.signin_expiration.respond_to?(:call)
         self.class.signin_expiration = self.class.signin_expiration.call(self)
       end
       expiration_time = (self.class.signin_expiration == 0 || permanent) ? nil : (Time.zone.now + self.class.signin_expiration)
-      Signin.create!(signinable: self, ip: ip, referer: referer, user_agent: user_agent, expiration_time: expiration_time).token
+      Signin.create!(custom_data: custom_data, signinable: self, ip: ip, referer: referer, user_agent: user_agent, expiration_time: expiration_time).token
     end
 
     def signout(token, ip, user_agent, skip_restrictions=[])
@@ -81,6 +81,7 @@ module Signinable
     def last_signin
       signins.last unless signins.empty?
     end
+
   end
 end
 
