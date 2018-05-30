@@ -51,3 +51,7 @@
 ## v2.0.8
 
 * Add ability to skip restriction on token authentication
+
+## v2.0.9
+
+* Add ability to save custom data on signin
