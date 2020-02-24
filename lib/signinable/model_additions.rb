@@ -81,7 +81,6 @@ module Signinable
     def last_signin
       signins.last unless signins.empty?
     end
-
   end
 end
 
