@@ -59,3 +59,9 @@
 ## v2.0.11
 
 - replace update_attributes for update in model
+
+## v2.0.12
+
+- _permanent_ and _custom_data_ params in _signin_ method are key-attributes now
+- _skip_restrictions_ param in _authenticate_with_token_ method is key-attribute now
+- _skip_restrictions_ param in _signout_ method is key-attribute now

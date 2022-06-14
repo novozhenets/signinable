@@ -1,87 +1,113 @@
+# frozen_string_literal: true
+
 module Signinable
   module ModelAdditions
     extend ActiveSupport::Concern
 
     module ClassMethods
+      ALLOWED_RESTRICTIONS = %i[ip user_agent].freeze
+      DEFAULT_EXPIRATION = 7200
+
+      cattr_reader :signin_expiration
+      cattr_reader :simultaneous_signings
+      cattr_reader :signin_restrictions
+
       def signinable(options = {})
-        cattr_accessor :signin_expiration
-        cattr_accessor :signin_simultaneous
-        cattr_accessor :signin_restrictions
-        self.signin_expiration = options.fetch(:expiration, 2.hours)
-        self.signin_simultaneous = options.fetch(:simultaneous, true)
+        self.signin_expiration = options.fetch(:expiration, DEFAULT_EXPIRATION)
+        self.simultaneous_signings = options.fetch(:simultaneous, true)
         self.signin_restrictions = options[:restrictions]
 
         has_many :signins, as: :signinable, dependent: :destroy
       end
 
-      def authenticate_with_token(token, ip, user_agent, skip_restrictions=[])
-        if(signin = Signin.find_by_token(token))
-          if self.signin_expiration.respond_to?(:call)
-            self.signin_expiration = self.signin_expiration.call(signin.signinable)
-          end
+      def authenticate_with_token(token, ip, user_agent, skip_restrictions: [])
+        signin = Signin.find_by(token: token)
 
-          if self.signin_expiration > 0
-            return nil if signin.expired?
-          end
+        return unless signin
+        return nil if signin.expired?
+        return nil unless check_simultaneous_signings(signin)
+        return nil unless check_signin_permission(signin, { ip: ip, user_agent: user_agent }, skip_restrictions)
 
-          unless self.signin_simultaneous
-            return nil unless signin == signin.signinable.last_signin
-          end
-
-          return nil unless self.check_signin_permission(signin, ip, user_agent, skip_restrictions)
-          signin.update!(expiration_time: (Time.zone.now + self.signin_expiration)) unless signin.expiration_time.nil? || self.signin_expiration == 0
-          signin.signinable
-        end
+        signin.renew!(expiration_period) if signin.expireable?
+        signin.signinable
       end
 
-      def check_signin_permission(signin, ip, user_agent, skip_restrictions)
-        signin_permitted?(signin, ip, user_agent, skip_restrictions)
+      def check_signin_permission(signin, restrictions_to_check, skip_restrictions)
+        signin_permitted?(signin, restrictions_to_check, skip_restrictions)
+      end
+
+      def expiration_period
+        return signin_expiration.call if signin_expiration.respond_to?(:call)
+
+        signin_expiration
       end
 
       private
-      def signin_permitted?(signin, ip, user_agent, skip_restrictions)
-        restriction_fields = case
-        when self.signin_restrictions.respond_to?(:call)
-          self.signin_restrictions.call(signin.signinable)
-        when self.signin_restrictions.is_a?(Array)
-          self.signin_restrictions
-        else
-          []
+
+      cattr_writer :signin_expiration
+      cattr_writer :simultaneous_signings
+      cattr_writer :signin_restrictions
+
+      def signin_permitted?(signin, restrictions_to_check, skip_restrictions)
+        restriction_fields = signin_restriction_fields(signin, skip_restrictions)
+
+        restrictions_to_check.slice(*restriction_fields).each do |field, value|
+          return false unless signin.send(field) == value
         end
 
-        (restriction_fields - skip_restrictions).each do |field|
-          if(local_variables.include?(field.to_sym) && signin.respond_to?("#{field}"))
-            return false unless signin.send("#{field}") == eval("#{field}")
-          end
-        end
+        true
+      end
 
-        return true
+      def signin_restriction_fields(signin, skip_restrictions)
+        fields = if signin_restrictions.respond_to?(:call)
+                   signin_restrictions.call(signin.signinable)
+                 elsif signin_restrictions.is_a?(Array)
+                   signin_restrictions
+                 else
+                   []
+                 end
+        (fields - skip_restrictions) & ALLOWED_RESTRICTIONS
+      end
+
+      def check_simultaneous_signings(signin)
+        return true if simultaneous_signings
+
+        signin == signin.signinable.last_signin
       end
     end
 
-    def signin(ip, user_agent, referer, permanent = false, custom_data = {})
-      if self.class.signin_expiration.respond_to?(:call)
-        self.class.signin_expiration = self.class.signin_expiration.call(self)
-      end
-      expiration_time = (self.class.signin_expiration == 0 || permanent) ? nil : (Time.zone.now + self.class.signin_expiration)
-      Signin.create!(custom_data: custom_data, signinable: self, ip: ip, referer: referer, user_agent: user_agent, expiration_time: expiration_time).token
+    def signin(ip, user_agent, referer, permanent: false, custom_data: {})
+      expires_in = self.class.expiration_period
+      expiration_time = expires_in.zero? || permanent ? nil : expires_in.seconds.from_now
+      Signin.create!(
+        signinable: self,
+        ip: ip,
+        referer: referer,
+        user_agent: user_agent,
+        expiration_time: expiration_time,
+        custom_data: custom_data
+      ).token
     end
 
-    def signout(token, ip, user_agent, skip_restrictions=[])
-      if(signin = Signin.find_by_token(token))
-        return nil unless self.class.check_signin_permission(signin, ip, user_agent, skip_restrictions)
-        signin.expire!
+    def signout(token, ip, user_agent, skip_restrictions: [])
+      signin = Signin.find_by_token(token)
 
-        return true
-      end
+      return unless signin
+      return unless self.class.check_signin_permission(
+        signin,
+        { ip: ip, user_agent: user_agent },
+        skip_restrictions
+      )
 
-      return nil
+      signin.expire!
+
+      true
     end
 
     def last_signin
-      signins.last unless signins.empty?
+      signins.last
     end
   end
 end
 
-ActiveRecord::Base.send(:include, Signinable::ModelAdditions)
+ActiveRecord::Base.include Signinable::ModelAdditions

@@ -1,0 +1,11 @@
+AllCops:
+  SuggestExtensions: false
+  NewCops: enable
+  TargetRubyVersion: 2.5
+  Exclude:
+    - "config/**/*"
+    - "db/**/*"
+    - "spec/**/*"
+
+Style/Documentation:
+  Enabled: false

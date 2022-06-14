@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'resolv'
 
 class Signin < ActiveRecord::Base
@@ -13,11 +15,19 @@ class Signin < ActiveRecord::Base
   end
 
   def expire!
-    update!(expiration_time: Time.zone.now)
+    renew!(0)
   end
 
   def expired?
-    expiration_time && expiration_time <= Time.zone.now
+    expireable? && expiration_time.past?
+  end
+
+  def expireable?
+    !expiration_time.nil?
+  end
+
+  def renew!(period)
+    update!(expiration_time: (Time.zone.now + period))
   end
 
   serialize :custom_data if ActiveRecord::Base.connection.instance_values['config'][:adapter].match('mysql')
