@@ -65,3 +65,7 @@
 - _permanent_ and _custom_data_ params in _signin_ method are key-attributes now
 - _skip_restrictions_ param in _authenticate_with_token_ method is key-attribute now
 - _skip_restrictions_ param in _signout_ method is key-attribute now
+
+## v3.0.0
+
+- Add JWT as intermediate to reduce number of DB requests

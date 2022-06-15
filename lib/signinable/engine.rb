@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'jwt'
+
 module Signinable
   class Engine < ::Rails::Engine
     initializer :append_migrations do |app|
