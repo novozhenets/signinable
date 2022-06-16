@@ -16,7 +16,7 @@ module Signinable
       cattr_reader :jwt_exp
 
       def signinable(options = {})
-        self.refresh_exp = options.fetch(:expiration, DEFAULT_REFRESH_EXP)
+        self.refresh_exp = options.fetch(:refresh_exp, DEFAULT_REFRESH_EXP)
         self.simultaneous_signings = options.fetch(:simultaneous, true)
         self.signin_restrictions = options[:restrictions]
         self.jwt_secret = options.fetch(:jwt_secret)
