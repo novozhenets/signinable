@@ -148,8 +148,17 @@ describe User do
         sign_in_user(user, credentials)
       end
 
+      it 'returns nil if user not found' do
+        allow(described_class).to receive(:find_by).and_return(nil)
+        expect(described_class.authenticate_with_token(user.jwt, *credentials)).to be_nil
+      end
+
       it 'returns user' do
         expect(described_class.authenticate_with_token(user.jwt, *credentials)).to eq(user)
+      end
+
+      it 'returns jwt with user' do
+        expect(described_class.authenticate_with_token(user.jwt, *credentials).jwt).to eq(user.jwt)
       end
 
       it 'does not update refresh token' do

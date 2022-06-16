@@ -31,7 +31,11 @@ module Signinable
         jwt_payload = extract_jwt_payload(jwt)
         return refresh_jwt(jwt, ip, user_agent, skip_restrictions: skip_restrictions) unless jwt_payload
 
-        find_by(primary_key => jwt_payload['signinable_id'])
+        signinable = find_by(primary_key => jwt_payload['signinable_id'])
+        return nil unless signinable
+
+        signinable.jwt = jwt
+        signinable
       end
 
       def check_signin_permission(signin, restrictions_to_check, skip_restrictions)
