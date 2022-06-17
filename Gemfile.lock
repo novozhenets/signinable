@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    signinable (2.0.14)
+    signinable (2.0.16)
       jwt (>= 2.4.1)
       rails (>= 5.0.0)
 

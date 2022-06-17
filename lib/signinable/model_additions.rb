@@ -75,6 +75,12 @@ module Signinable
         signin.signinable
       end
 
+      def refresh_token_from_jwt(jwt)
+        JWT.decode(jwt, jwt_secret, true, { verify_expiration: false, algorithm: 'HS256' })[0]['refresh_token']
+      rescue JWT::DecodeError
+        nil
+      end
+
       private
 
       cattr_writer :refresh_exp
@@ -85,12 +91,6 @@ module Signinable
 
       def extract_jwt_payload(jwt)
         JWT.decode(jwt, jwt_secret, true, { algorithm: 'HS256' })[0]
-      rescue JWT::DecodeError
-        nil
-      end
-
-      def refresh_token_from_jwt(jwt)
-        JWT.decode(jwt, jwt_secret, true, { verify_expiration: false, algorithm: 'HS256' })[0]['refresh_token']
       rescue JWT::DecodeError
         nil
       end
@@ -133,10 +133,14 @@ module Signinable
       self.jwt = self.class.generate_jwt(signin.token, signin.signinable_id)
     end
 
-    def signout(token, ip, user_agent, skip_restrictions: [])
+    def signout(jwt, ip, user_agent, skip_restrictions: [])
+      token = self.class.refresh_token_from_jwt(jwt)
+      return unless token
+
       signin = Signin.find_by_token(token)
 
       return unless signin
+      return if signin.expired?
       return unless self.class.check_signin_permission(
         signin,
         { ip: ip, user_agent: user_agent },

@@ -77,10 +77,18 @@ describe User do
   end
 
   describe '#signout' do
+    it 'ignores expired signin' do
+      sign_in_user(user, credentials)
+      signin = user.last_signin
+      Timecop.travel(signin.expiration_time) do
+        expect(sign_out_user(user, credentials)).to be_falsey
+      end
+    end
+
     it 'should expire signin' do
       sign_in_user(user, credentials)
       signin = user.last_signin
-      sign_out_user(signin, credentials)
+      sign_out_user(user, credentials)
       expect(signin.reload).to be_expired
     end
 
@@ -88,8 +96,7 @@ describe User do
       %i[ip user_agent].each do |c|
         it "allows signout when #{c} changes" do
           sign_in_user(user, credentials)
-          signin = user.last_signin
-          expect(sign_out_user(signin, credentials)).to be_truthy
+          expect(sign_out_user(user, credentials)).to be_truthy
         end
       end
     end
@@ -99,8 +106,7 @@ describe User do
         it "forbids signout when #{c} changes" do
           allow(described_class).to receive(:signin_restrictions).and_return([c])
           sign_in_user(user, credentials)
-          signin = user.last_signin
-          expect(sign_out_user(signin, other_credentials)).to be_nil
+          expect(sign_out_user(user, other_credentials)).to be_nil
         end
       end
     end
