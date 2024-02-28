@@ -15,12 +15,12 @@ Gem::Specification.new do |s|
   s.summary     = 'Token based signin'
   s.description = 'Allows authentication with tokens'
 
-  s.required_ruby_version = '>= 2.5'
+  s.required_ruby_version = '>= 3.0'
 
   s.files = Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.rdoc']
 
-  s.add_dependency 'jwt', '>= 2.4.1'
-  s.add_dependency 'rails', '>= 5.0.0'
+  s.add_dependency 'jwt', '>= 2.8.0'
+  s.add_dependency 'rails', '>= 7.0.0'
 
   s.add_development_dependency 'factory_bot_rails'
   s.add_development_dependency 'pry-rails'

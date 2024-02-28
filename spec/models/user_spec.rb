@@ -4,7 +4,6 @@ require 'rails_helper'
 
 describe User do
   let(:credentials) { ['127.0.0.1', 'user_agent'] }
-  let(:other_credentials) { ['127.0.0.2', 'user_agent2'] }
   let(:user) { create(:user) }
 
   before :each do
@@ -29,8 +28,7 @@ describe User do
     end
 
     it 'should generate jwt with correct payload' do
-      sign_in_user(user, credentials)
-      signin = user.last_signin
+      signin =  sign_in_user(user, credentials)
       payload = JWT.decode(user.jwt, 'test', true, { algorithm: 'HS256' })[0]
       expect(payload).to include(
         'refresh_token' => signin.token,
@@ -39,16 +37,8 @@ describe User do
     end
 
     it 'should set expiration_time' do
-      sign_in_user(user, credentials)
-      signin = user.last_signin
+      signin = sign_in_user(user, credentials)
       expect(signin.expiration_time.to_i).to eq((Time.zone.now + User.refresh_exp).to_i)
-    end
-
-    it 'should not set expiration_time' do
-      allow(described_class).to receive(:refresh_exp).and_return(0)
-      sign_in_user(user, credentials)
-      signin = user.last_signin
-      expect(signin.expiration_time).to be_nil
     end
 
     context 'when simultaneous signins enabled' do
@@ -78,53 +68,16 @@ describe User do
 
   describe '#signout' do
     it 'ignores expired signin' do
-      sign_in_user(user, credentials)
-      signin = user.last_signin
+      signin = sign_in_user(user, credentials)
       Timecop.travel(signin.expiration_time) do
-        expect(sign_out_user(user, credentials)).to be_falsey
+        expect(sign_out_user(user)).to be_falsey
       end
     end
 
     it 'should expire signin' do
-      sign_in_user(user, credentials)
-      signin = user.last_signin
-      sign_out_user(user, credentials)
+      signin = sign_in_user(user, credentials)
+      sign_out_user(user)
       expect(signin.reload).to be_expired
-    end
-
-    context 'when has no restrictions' do
-      %i[ip user_agent].each do |c|
-        it "allows signout when #{c} changes" do
-          sign_in_user(user, credentials)
-          expect(sign_out_user(user, credentials)).to be_truthy
-        end
-      end
-    end
-
-    context 'when has restrictions' do
-      %i[ip user_agent].each do |c|
-        it "forbids signout when #{c} changes" do
-          allow(described_class).to receive(:signin_restrictions).and_return([c])
-          sign_in_user(user, credentials)
-          expect(sign_out_user(user, other_credentials)).to be_nil
-        end
-      end
-    end
-  end
-
-  describe '#last_signin' do
-    it 'retuns nil when no signins' do
-      expect(user.last_signin).to be_nil
-    end
-
-    it 'returns last active signin' do
-      sign_in_user(user, credentials)
-      sign_in_user(user, credentials)
-      signin = user.signins.active.last
-      sign_in_user(user, credentials)
-      user.signins.last.expire!
-
-      expect(user.last_signin).to eq(signin)
     end
   end
 
@@ -180,16 +133,17 @@ describe User do
         Timecop.travel(Time.zone.now + described_class.jwt_exp)
       end
 
-      it 'does not do user lookup' do
-        allow(described_class).to receive(:find_by)
-        described_class.authenticate_with_token(user.jwt, *credentials)
-        expect(described_class).not_to have_received(:find_by)
-      end
-
       it 'calls for refresh token' do
         allow(described_class).to receive(:refresh_jwt)
         described_class.authenticate_with_token(user.jwt, *credentials)
         expect(described_class).to have_received(:refresh_jwt)
+      end
+
+      it 'assigns new jwt' do
+        allow(User).to receive(:find_by).and_return(user)
+        allow(user).to receive(:jwt=)
+        described_class.authenticate_with_token(user.jwt, *credentials)
+        expect(user).to have_received(:jwt=)
       end
     end
   end
@@ -207,60 +161,35 @@ describe User do
     end
 
     it 'returns nil when signin expired' do
-      sign_in_user(user, credentials)
-      signin = user.last_signin
-      Timecop.travel(Time.zone.now + described_class.refresh_exp)
-      expect(described_class.refresh_jwt(user.jwt, *credentials)).to be_nil
-    end
-
-    context 'when has no restrictions' do
-      %i[ip user_agent].each do |c|
-        it "allows signin when #{c} changed" do
-          sign_in_user(user, credentials)
-          expect(described_class.refresh_jwt(user.jwt, *other_credentials)).to eq(user)
-        end
-      end
-    end
-
-    context 'when has restrictions' do
-      %i[ip user_agent].each do |c|
-        it "forbids signin when #{c} changed" do
-          allow(User).to receive(:signin_restrictions).and_return([c])
-          sign_in_user(user, credentials)
-          expect(described_class.refresh_jwt(user.jwt, *other_credentials)).to be_nil
-        end
+      signin = sign_in_user(user, credentials)
+      Timecop.travel(Time.zone.now + described_class.refresh_exp) do
+        expect(described_class.refresh_jwt(
+          described_class.extract_jwt_payload(user.jwt)[:data],
+          *credentials
+        )).to be_nil
       end
     end
 
     it 'renews signin' do
-      sign_in_user(user, credentials)
-      signin = user.last_signin
-      allow(signin).to receive(:renew!)
-      allow(Signin).to receive(:find_by).with(token: signin.token).and_return(signin)
+      signin = sign_in_user(user, credentials)
 
-      described_class.refresh_jwt(user.jwt, *credentials)
-      expect(signin).to have_received(:renew!).with(period: described_class.expiration_period, ip: credentials[0],
-                                                    user_agent: credentials[1], refresh_token: true)
-    end
-
-    it 'assigns new jwt' do
-      sign_in_user(user, credentials)
-      signin = user.last_signin
-      allow(user).to receive(:jwt=)
-      allow(signin).to receive(:signinable).and_return(user)
-      allow(Signin).to receive(:find_by).with(token: signin.token).and_return(signin)
-      allow(described_class).to receive(:generate_jwt).and_return('bla')
-
-      described_class.refresh_jwt(user.jwt, *credentials)
-      expect(user).to have_received(:jwt=).with('bla')
+      expect {
+        described_class.refresh_jwt(
+          described_class.extract_jwt_payload(user.jwt)[:data],
+          *credentials
+        )
+        signin.reload
+      }.to change { signin.token }
     end
 
     it 'regenerates jwt' do
-      sign_in_user(user, credentials)
-      signin = user.last_signin
+      signin = sign_in_user(user, credentials)
       allow(described_class).to receive(:generate_jwt)
 
-      described_class.refresh_jwt(user.jwt, *credentials)
+      described_class.refresh_jwt(
+        described_class.extract_jwt_payload(user.jwt)[:data],
+        *credentials
+      )
       signin.reload
       expect(described_class).to have_received(:generate_jwt).with(signin.token, signin.signinable_id)
     end

@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module Signinable
-  VERSION = '2.0.17'
+  VERSION = '3.0.1'
 end
